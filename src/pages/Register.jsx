@@ -1,10 +1,13 @@
 import { useEffect, useState } from "react";
 // import { NavLink, useNavigate } from "react-router-dom";
 import { useForm } from "react-hook-form";
-// import axios from "axios";
+import axios from "axios";
 import { yupResolver } from "@hookform/resolvers/yup";
 import * as yup from "yup";
 import { NavLink } from "react-router-dom";
+import { toast } from "react-toastify";
+
+
 
 const formSchema = yup.object().shape({
   username: yup
@@ -90,30 +93,28 @@ export default function Register() {
 
   const onSubmit = async (data) => {
     console.log(data);
-    // const { username, email, password } = data;
-    // try {
-    //   const res = await axios.post(
-    //     process.env.REACT_APP_BACKEND_URL + "api/auth/register",
-    //     {
-    //       username,
-    //       email,
-    //       password,
-    //     }
-    //   );
-    //   console.log(res.data);
-    setSuccess(true);
-
-    //   toast.success("Verification Email Sent");
-    //   // res.data && navigate("/login");
-    // } catch (err) {
-    //   setSuccess(false);
-    //   console.error(err);
-    //   if (err.response) {
-    //     toast.error(err.response.data);
-    //   } else {
-    //     toast.error(err.message);
-    //   }
-    // }
+    const { username, email, password } = data;
+    try {
+      const res = await axios.post(process.env.BACKEND_URL + "api/auth/register",
+        {
+          username,
+          email,
+          password,
+        }
+      );
+      console.log(res.data);
+      setSuccess(true);
+      toast.success("Verification Email Sent");
+      // res.data && navigate("/login");
+    } catch (err) {
+      setSuccess(false);
+      console.error(err);
+      if (err.response) {
+        toast.error(err.response.data);
+      } else {
+        toast.error(err.message);
+      }
+    }
     reset();
     setFocus(false);
   };

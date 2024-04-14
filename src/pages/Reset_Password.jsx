@@ -1,8 +1,18 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useForm } from "react-hook-form";
-import { NavLink } from "react-router-dom";
+import { NavLink, useLocation } from "react-router-dom";
+import axios from "axios";
 
 const Reset_Password = () => {
+  const location = useLocation();
+
+  const searchParams = new URLSearchParams(location.search);
+  const verificationToken = searchParams.get("token");
+  const email = searchParams.get("email");
+
+  console.log("Token:", verificationToken);
+  console.log("Email:", email);
+
   const [showPassword, setShowPassword] = useState(false);
   const {
     handleSubmit,
@@ -11,11 +21,22 @@ const Reset_Password = () => {
     formState: { errors },
   } = useForm();
   const password = watch("password");
-  const onSubmit = (values) => console.log(values);
+  const onSubmit = async (values) => {
+    const { otp, password } = value;
+
+    try {
+      const res = await axios.post(
+        process.env.REACT_APP_BACKEND_URL + "api/auth/reset-password",
+        {
+          verificationToken,email,otp,password
+        }
+      );
+    } catch (error) {}
+  };
 
   return (
     <div className="flex h-screen bg-[#F9FCFF]">
-<div className="flex-1 flex items-center  flex-col gap-[20px] relative">
+      <div className="flex-1 flex items-center  flex-col gap-[20px] relative">
         <div className="box-content relative top-[70px]  max-w-[317px] rounded-[8px]  py-[8px] px-[16px] flex flex-col sm:flex-row sm:items-center gap-[8px]">
           <span className="text-[#1E77EB] font-[600] text-2xl leading-[21.78px] ">
             Ksolves GPT
@@ -146,8 +167,15 @@ const Reset_Password = () => {
               Reset Password
             </button>
             <div className=" flex flex-col gap-[8px] items-center">
-              <p>Already have an account? <NavLink to={'/login'} className="text-blue-700 font-semibold cursor-pointerĪ">Login</NavLink></p>
-          
+              <p>
+                Already have an account?{" "}
+                <NavLink
+                  to={"/login"}
+                  className="text-blue-700 font-semibold cursor-pointerĪ"
+                >
+                  Login
+                </NavLink>
+              </p>
             </div>
           </form>
         </div>

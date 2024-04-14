@@ -5,6 +5,9 @@ import { useForm } from "react-hook-form";
 import { yupResolver } from "@hookform/resolvers/yup";
 import * as yup from "yup";
 import { NavLink } from "react-router-dom";
+import axios from "axios";
+import { toast } from "react-toastify";
+
 
 const formSchema = yup.object().shape({
   email: yup
@@ -52,34 +55,33 @@ export default function Register() {
     } else {
       clearErrors("email");
     }
-  }, [email,clearErrors,setError]);
+  }, [email, clearErrors, setError]);
 
   const onSubmit = async (data) => {
     console.log(data);
-    // const { username, email, password } = data;
-    // try {
-    //   const res = await axios.post(
-    //     process.env.REACT_APP_BACKEND_URL + "api/auth/register",
-    //     {
-    //       username,
-    //       email,
-    //       password,
-    //     }
-    //   );
-    //   console.log(res.data);
-    setSuccess(true);
+    const { email } = data;
+    try {
+      const res = await axios.post(
+        process.env.REACT_APP_BACKEND_URL + "api/auth/forgot-password",
+        {
+          email,
+        }
+      );
+      console.log(res.data);
+      setSuccess(true);
 
-    //   toast.success("Verification Email Sent");
-    //   // res.data && navigate("/login");
-    // } catch (err) {
-    setSuccess(false);
-    //   console.error(err);
-    //   if (err.response) {
-    //     toast.error(err.response.data);
-    //   } else {
-    //     toast.error(err.message);
-    //   }
-    // }
+      toast.success("Verification Email Sent");
+      
+      // res.data && navigate("/login");
+    } catch (err) {
+      setSuccess(false);
+      console.error(err);
+      if (err.response) {
+        toast.error(err.response.data);
+      } else {
+        toast.error(err.message);
+      }
+    }
     reset();
   };
 
@@ -96,7 +98,7 @@ export default function Register() {
           <p className="text-[24px] leading-[14px]">Forgot Password</p>
           {success && (
             <span className=" bg-green-100 text-center text-green-800 py-2 text-sm leading-[14px]">
-              Please check your email for Reset Password Link
+              Reset Password Link sent to given email
             </span>
           )}
           <form

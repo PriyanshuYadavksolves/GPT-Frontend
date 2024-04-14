@@ -1,45 +1,76 @@
+import axios from "axios";
+import { useEffect, useState } from "react";
 import { NavLink, useLocation } from "react-router-dom";
 
 const Verify_Email = () => {
-  const location = useLocation().search.split("=");
-  const token = location[1].split("&")[0];
-  const email = location[2];
-  console.log(email, token);
-  const falt = false;
+  const location = useLocation();
+  const [falt, setFalt] = useState("");
+  const [success, setSuccess] = useState("");
+
+  useEffect(() => {
+    const searchParams = new URLSearchParams(location.search);
+    const verificationToken = searchParams.get("token");
+    const email = searchParams.get("email");
+
+    console.log("Token:", verificationToken);
+    console.log("Email:", email);
+
+    const emailVerification = async () => {
+      try {
+        const res = await axios.post(
+          process.env.BACKEND_URL + "api/auth/verify-email",
+          { verificationToken, email }
+        );
+        console.log(res.data);
+        setSuccess(res.data.message);
+      } catch (error) {
+        console.log(error);
+        setFalt(error.response.data.message);
+      }
+    };
+
+    emailVerification();
+  }, [location]);
 
   return (
     <>
       <div className="flex h-screen bg-[#F9FCFF]">
-        <div className="flex-1 flex items-center justify-center flex-col gap-[20px] ">
-          <div className="box-content   max-w-[317px] rounded-[8px]  py-[8px] px-[16px] flex flex-col sm:flex-row sm:items-center gap-[8px]">
-            <span className="text-[#1E77EB] font-[600] text-2xl leading-[21.78px] ">
-              Ksolves GPT
-            </span>
-          </div>
+      <div className="flex-1 flex items-center  flex-col gap-[20px] relative">
+        <div className="box-content relative top-[70px]  max-w-[317px] rounded-[8px]  py-[8px] px-[16px] flex flex-col sm:flex-row sm:items-center gap-[8px]">
+          <span className="text-[#1E77EB] font-[600] text-2xl leading-[21.78px] ">
+            Ksolves GPT
+          </span>
+        </div>
 
-          <div className="  sm:w-full sm:max-w-[480px]  rounded-[16px] flex flex-col items-center p-[40px] gap-[30px]  shadow-lg bg-white">
-            <p className="font-semibold text-2xl">
-              {!falt ? "THANKS FOR SIGNING UP!" : falt}
+        <div className="  sm:w-full sm:max-w-[480px] relative top-[70px] rounded-[16px] flex flex-col p-[40px] gap-[30px]  shadow-lg bg-white">
+
+          {falt && <p className=" text-2xl text-center text-red-500">
+              {falt}
+            </p>}
+            {success && 
+            <p className=" text-2xl text-center text-green-700">
+              {success}
             </p>
-            <p className="font-semibold text-2xl">
-              {!falt
-                ? "Your Email Is Verified"
-                : "Go and check your email link again"}
+            }
+            <p className="font-semibold text-2xl text-center">
+              {falt && "Go and check your email link again"}
+              {success && "Your Email is Verified"}
             </p>
 
-            {!falt ? (
-              <NavLink
-                to={"/login"}
-                className="flex w-full h-[46px] rounded-[8px] text-[18px] font-[600] leading-[24px] justify-center items-center bg-[#3086F8] text-white"
-                >
-                Please Login
-              </NavLink>
-            ) : (
+            {falt && (
               <NavLink
                 to={"/register"}
                 className="flex w-full h-[46px] rounded-[8px] text-[18px] font-[600] leading-[24px] justify-center items-center bg-[#3086F8] text-white"
-                >
+              >
                 Go Signup Page
+              </NavLink>
+            )}
+            {success && (
+              <NavLink
+                to={"/login"}
+                className="flex w-full h-[46px] rounded-[8px] text-[18px] font-[600] leading-[24px] justify-center items-center bg-[#3086F8] text-white"
+              >
+                Please Login
               </NavLink>
             )}
           </div>
