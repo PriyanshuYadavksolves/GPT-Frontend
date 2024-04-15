@@ -45,6 +45,8 @@ export default function Register() {
   const atLeastOneNumeric = /[0-9]/g; // numbers from 0 to 9
   const atLeastOneSpecialChar = /[#?!@$%^&*-]/g; // any of the special characters within the square brackets
 
+  
+  
   const {
     register,
     handleSubmit,
@@ -56,11 +58,20 @@ export default function Register() {
   } = useForm({
     resolver: yupResolver(formSchema),
   });
-
-  const password = watch("password");
+  
   const email = watch("email");
 
+  const password = watch("password");
+
   const [focus, setFocus] = useState(false);
+  const passwordTracker = {
+    uppercase: atLeastOneUppercase.test(password),
+    lowercase: atLeastOneLowercase.test(password),
+    number: atLeastOneNumeric.test(password),
+    specialChar: atLeastOneSpecialChar.test(password),
+  };
+  const [showPassword, setShowPassword] = useState(false);
+
 
   useEffect(() => {
     if (
@@ -80,16 +91,6 @@ export default function Register() {
       clearErrors("email");
     }
   }, [email, clearErrors, setError]);
-
-  const passwordTracker = {
-    uppercase: atLeastOneUppercase.test(password),
-    lowercase: atLeastOneLowercase.test(password),
-    number: atLeastOneNumeric.test(password),
-    specialChar: atLeastOneSpecialChar.test(password),
-  };
-
-  // this is used to hide and show password input value
-  const [showPassword, setShowPassword] = useState(false);
 
   const onSubmit = async (data) => {
     console.log(data);

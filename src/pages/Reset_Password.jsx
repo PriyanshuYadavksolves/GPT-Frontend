@@ -1,9 +1,35 @@
 import { useState, useEffect } from "react";
 import { useForm } from "react-hook-form";
-import { NavLink, useLocation } from "react-router-dom";
+import { NavLink, useLocation,useNavigate } from "react-router-dom";
 import axios from "axios";
+import { yupResolver } from "@hookform/resolvers/yup";
+import * as yup from "yup";
+import { toast } from "react-toastify";
+
+
+const formSchema = yup.object().shape({
+  otp:yup.string()
+  .required('OTP is required')
+  .min(6,'OTP must be of 6 Chacater')
+  .max(6,'OTP must be of 6 Chacater')
+  ,
+  password: yup
+    .string()
+    .required("Password is required")
+    .min(6, "Password must be at least 6 characters")
+    .matches(/[a-z]/, "Must contain one lowercase character")
+    .matches(/[A-Z]/, "Must contain one uppercase character")
+    .matches(/[0-9]/, "Must contain one number")
+    .matches(/[#?!@$%^&*-]/, "Must contain one special character"),
+});
+
+
 
 const Reset_Password = () => {
+  const atLeastOneUppercase = /[A-Z]/g; // capital letters from A to Z
+  const atLeastOneLowercase = /[a-z]/g; // small letters from a to z
+  const atLeastOneNumeric = /[0-9]/g; // numbers from 0 to 9
+  const atLeastOneSpecialChar = /[#?!@$%^&*-]/g; // any of the special characters within the square brackets
   const location = useLocation();
 
   const searchParams = new URLSearchParams(location.search);
@@ -12,26 +38,58 @@ const Reset_Password = () => {
 
   console.log("Token:", verificationToken);
   console.log("Email:", email);
+  const navigate = useNavigate()
+
 
   const [showPassword, setShowPassword] = useState(false);
+  const [success,setSuccess] = useState(false)
+  
   const {
     handleSubmit,
     register,
     watch,
+    reset,
     formState: { errors },
-  } = useForm();
+  } = useForm({
+    resolver: yupResolver(formSchema),
+  });
   const password = watch("password");
-  const onSubmit = async (values) => {
-    const { otp, password } = value;
+  
+  const [focus, setFocus] = useState(false);
+
+  const passwordTracker = {
+    uppercase: atLeastOneUppercase.test(password),
+    lowercase: atLeastOneLowercase.test(password),
+    number: atLeastOneNumeric.test(password),
+    specialChar: atLeastOneSpecialChar.test(password),
+  };
+
+  const onSubmit = async (data) => {
+    const { otp, password } = data;
 
     try {
       const res = await axios.post(
-        process.env.REACT_APP_BACKEND_URL + "api/auth/reset-password",
+        process.env.BACKEND_URL + "api/auth/reset-password",
         {
           verificationToken,email,otp,password
         }
       );
-    } catch (error) {}
+
+      console.log(res.data)
+      console.log(res)
+      setSuccess(true)
+      reset()
+      setTimeout(() => {
+        setSuccess(false)
+        navigate('/login', { replace: true });
+      }, 3000);
+
+    } catch (error) {
+      console.log(error)
+      if(error.response){
+        toast.error(error.response.data.message)
+      }
+    }
   };
 
   return (
@@ -45,6 +103,11 @@ const Reset_Password = () => {
 
         <div className="  sm:w-full sm:max-w-[480px] relative top-[70px] rounded-[16px] flex flex-col p-[40px] gap-[30px]  shadow-lg bg-white">
           <p className="text-[24px] leading-[14px]">Change Password</p>
+          {success && (
+            <span className=" bg-green-100 break-words text-center text-green-800 py-2 text-sm leading-[14px]">
+              Success! Redirecting to login page in 3 second
+            </span>
+          )}
 
           <form
             onSubmit={handleSubmit(onSubmit)}
@@ -64,41 +127,30 @@ const Reset_Password = () => {
                 placeholder="Enter Your OTP"
                 autoComplete="otp"
                 className="w-full h-[40px] rounded-[8px] border-[1px] border-[#afb5be] p-[12px] "
-                {...register("otp", {
-                  required: "OTP is required",
-                  minLength: {
-                    value: 6,
-                    message: "at-least 6 characters required",
-                  },
-                })}
+                {...register("otp")}
               />
               {errors.otp && (
                 <p className="text-red-500 text-xs">{errors.otp.message}</p>
               )}
             </div>
 
-            <div className=" h-[70px] flex flex-col gap-[8px]">
+            <div className=" flex flex-col gap-[8px]">
               <label
                 htmlFor="Password"
                 className="text-[12px] leading-[14px] font-[400] text-[#4B5564]"
               >
                 Password
               </label>
-              <div className="relative ">
+              <div className="relative" >
                 <input
                   className="w-full h-[40px] rounded-[8px] border-[1px] border-[#afb5be] p-[12px] "
                   type={showPassword ? "text" : "password"} //here i used showPassword state to hide and show password
                   name="Password"
                   id="Password"
-                  autoComplete="current-password"
+                  onFocus={() => setFocus(true)}
+                  // autoComplete="current-password"
                   placeholder="Password"
-                  {...register("password", {
-                    required: "Password is required",
-                    minLength: {
-                      value: 6,
-                      message: "Password must be at least 6 characters",
-                    },
-                  })}
+                  {...register("password")}
                 />
 
                 {password && (
@@ -157,10 +209,53 @@ const Reset_Password = () => {
                   {errors.password.message}
                 </p>
               )}
+                            <div>
+                {(focus || password) && (
+                  <ul className="grid grid-cols-2 gap-1 sm:flex justify-between ">
+                    <li
+                      className={`${
+                        !passwordTracker.uppercase
+                          ? "text-red-500"
+                          : "text-green-500"
+                      }`}
+                    >
+                      Uppercase
+                    </li>
+                    <li
+                      className={`${
+                        !passwordTracker.lowercase
+                          ? "text-red-500"
+                          : "text-green-500"
+                      }`}
+                    >
+                      Lowercase
+                    </li>
+                    <li
+                      className={`${
+                        !passwordTracker.specialChar
+                          ? "text-red-500"
+                          : "text-green-500"
+                      }`}
+                    >
+                      SpecialChar
+                    </li>
+                    <li
+                      className={`${
+                        !passwordTracker.number
+                          ? "text-red-500"
+                          : "text-green-500"
+                      }`}
+                    >
+                      Number
+                    </li>
+                  </ul>
+                )}
+              </div>
             </div>
 
             <button
               type="submit"
+              disabled={success}
               className="flex w-full h-[46px] rounded-[8px] text-[18px] font-[600] leading-[24px] justify-center items-center bg-[#3086F8] text-white
               disabled:cursor-not-allowed"
             >

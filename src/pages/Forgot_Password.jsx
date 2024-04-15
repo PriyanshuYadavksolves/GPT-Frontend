@@ -59,19 +59,18 @@ export default function Register() {
 
   const onSubmit = async (data) => {
     console.log(data);
+    setSuccess(false)
     const { email } = data;
     try {
       const res = await axios.post(
-        process.env.REACT_APP_BACKEND_URL + "api/auth/forgot-password",
+        process.env.BACKEND_URL + "api/auth/forgot-password",
         {
           email,
         }
       );
       console.log(res.data);
       setSuccess(true);
-
       toast.success("Verification Email Sent");
-      
       // res.data && navigate("/login");
     } catch (err) {
       setSuccess(false);
@@ -81,8 +80,9 @@ export default function Register() {
       } else {
         toast.error(err.message);
       }
+    }finally{
+      reset();
     }
-    reset();
   };
 
   return (
@@ -98,7 +98,7 @@ export default function Register() {
           <p className="text-[24px] leading-[14px]">Forgot Password</p>
           {success && (
             <span className=" bg-green-100 text-center text-green-800 py-2 text-sm leading-[14px]">
-              Reset Password Link sent to given email
+              Reset Password Link sent to your email
             </span>
           )}
           <form
