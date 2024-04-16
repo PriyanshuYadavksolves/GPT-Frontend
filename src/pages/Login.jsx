@@ -1,10 +1,41 @@
-
 import { useState } from "react";
 import { useForm } from "react-hook-form";
-import { NavLink } from "react-router-dom";
+import { NavLink, useNavigate } from "react-router-dom";
+import { GoogleLogin } from "@react-oauth/google";
+import axios from "axios";
+import { toast } from "react-toastify";
+import Cookies from "js-cookie";
 
 export default function Login() {
-  const [showPassword,setShowPassword] = useState(false)
+  const handleLogin = async (googleData) => {
+  
+    try {
+      console.log(googleData);
+      const res = await axios.post(
+        process.env.BACKEND_URL + "api/auth/google",
+        {
+          token: googleData.credential,
+        }
+      );
+      console.log(res.data);
+      Cookies.set("token", res.data.token);
+      toast.success("Login Successfull");
+      navigate("/home");
+    } catch (error) {
+      console.log(error);
+      if (error.response) {
+        toast.error(error.response.data.message);
+      } else {
+        toast.error(error.message);
+      }
+    }
+  };
+  const errorMessage = (error) => {
+    console.log(error);
+  };
+
+  const navigate = useNavigate();
+  const [showPassword, setShowPassword] = useState(false);
   const {
     handleSubmit,
     register,
@@ -12,27 +43,45 @@ export default function Login() {
     formState: { errors },
   } = useForm();
 
-  const password = watch('password')
-  
-  const onSubmit = (values) => console.log(values);
+  const password = watch("password");
+
+  const onSubmit = async (data) => {
+    const { email, password } = data;
+    try {
+      const res = await axios.post(process.env.BACKEND_URL + "api/auth/login", {
+        email,
+        password,
+      });
+      console.log(res.data);
+      Cookies.set("token", res.data.token);
+      toast.success("Login Successfull");
+      navigate("/home");
+    } catch (error) {
+      console.log(error);
+      if (error.response) {
+        toast.error(error.response.data.message);
+      } else {
+        toast.error(error.message);
+      }
+    }
+  };
 
   return (
     <div className="flex h-screen bg-[#F9FCFF]">
-<div className="flex-1 flex items-center  flex-col gap-[20px] relative">
-        <div className="box-content relative top-[70px]  max-w-[317px] rounded-[8px]  py-[8px] px-[16px] flex flex-col sm:flex-row sm:items-center gap-[8px]">
+      <div className="flex-1 flex items-center  flex-col gap-[20px] relative">
+        <div className="box-content relative top-[20px]  max-w-[317px] rounded-[8px]  py-[8px] px-[16px] flex flex-col sm:flex-row sm:items-center gap-[8px]">
           <span className="text-[#1E77EB] font-[600] text-2xl leading-[21.78px] ">
             Ksolves GPT
           </span>
         </div>
 
-        <div className="  sm:w-full sm:max-w-[480px] relative top-[70px] rounded-[16px] flex flex-col p-[40px] gap-[30px]  shadow-lg bg-white">
+        <div className="  sm:w-full sm:max-w-[480px] relative top-[20px] rounded-[16px] flex flex-col p-[40px] gap-[30px]  shadow-lg bg-white">
           <p className="text-[24px] leading-[14px]">Login</p>
 
           <form
             onSubmit={handleSubmit(onSubmit)}
             className="flex flex-col gap-[24px] w-full "
           >
-
             <div className=" h-[70px] flex flex-col gap-[8px]">
               <label
                 htmlFor="Email"
@@ -88,7 +137,7 @@ export default function Login() {
                     },
                   })}
                 />
-                
+
                 {password && (
                   <svg
                     onClick={() => setShowPassword(!showPassword)}
@@ -149,11 +198,25 @@ export default function Login() {
 
             <button
               type="submit"
-              className="flex w-full h-[46px] rounded-[8px] text-[18px] font-[600] leading-[24px] justify-center items-center bg-[#3086F8] text-white
+              className="flex w-full h-[40px] rounded-[8px] text-[18px] font-[600] leading-[24px] justify-center items-center bg-[#3086F8] text-white
               disabled:cursor-not-allowed"
             >
               Login
             </button>
+
+            <div className="flex w-full h-[40px] justify-center ">
+              <GoogleLogin
+                text="signup_with"
+                onSuccess={handleLogin}
+                onFailure={handleLogin}
+                cookiePolicy={"single_host_origin"}
+                type="standard"
+                cancel_on_tap_outside="true"
+                shape="pill"
+                theme="filled_blue"
+                logo_alignment="center"
+              />
+            </div>
 
             <NavLink
               to={"/forgot-password"}
@@ -162,15 +225,21 @@ export default function Login() {
               Forgot password?
             </NavLink>
             <div className=" flex flex-col gap-[8px] items-center">
-              <p>Dont have an account? <NavLink to={'/'} className="text-blue-700 font-semibold cursor-pointerĪ">Register</NavLink></p>
-          
+              <p>
+                Dont have an account?{" "}
+                <NavLink
+                  to={"/"}
+                  className="text-blue-700 font-semibold cursor-pointerĪ"
+                >
+                  Register
+                </NavLink>
+              </p>
             </div>
           </form>
         </div>
       </div>
       <div className="hidden lg:flex-1 bg-white lg:flex items-center justify-center ">
-        
-      <svg
+        <svg
           xmlns="http://www.w3.org/2000/svg"
           xmlnsXlink="http://www.w3.org/1999/xlink"
           data-name="Layer 1"
@@ -368,7 +437,6 @@ export default function Login() {
             fill="#2f2e41"
           />
         </svg>
-
       </div>
     </div>
   );

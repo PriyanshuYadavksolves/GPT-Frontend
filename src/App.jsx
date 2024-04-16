@@ -5,8 +5,10 @@ import Notfound from "./pages/Notfound";
 import Verify_Email from "./pages/Verify_Email";
 import Forgot_Password from "./pages/Forgot_Password";
 import Reset_Password from "./pages/Reset_Password";
+import Home from "./pages/Home";
 
 const App = () => {
+  
   return (
     <BrowserRouter>
       <Routes>
@@ -16,6 +18,7 @@ const App = () => {
         <Route path="/forgot-password" element={<Forgot_Password />} />
         <Route path="/user/reset-password" element={<Reset_Password />} />
         <Route path="*" element={<Notfound />} />
+        <Route path="/home" element={<Home/>}/>
       </Routes>
     </BrowserRouter>
   );

@@ -23,8 +23,6 @@ const formSchema = yup.object().shape({
     .matches(/[#?!@$%^&*-]/, "Must contain one special character"),
 });
 
-
-
 const Reset_Password = () => {
   const atLeastOneUppercase = /[A-Z]/g; // capital letters from A to Z
   const atLeastOneLowercase = /[a-z]/g; // small letters from a to z
@@ -79,8 +77,10 @@ const Reset_Password = () => {
       console.log(res)
       setSuccess(true)
       reset()
+      setFocus(false)
       setTimeout(() => {
         setSuccess(false)
+
         navigate('/login', { replace: true });
       }, 3000);
 

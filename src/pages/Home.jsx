@@ -1,12 +1,14 @@
-import Header from "../components/Header"
 
 const Home = () => {
   return (
-    <>
-    <Header/>
+    <div className="grid place-items-center h-screen">
+
+
+      welcome to Home
+
 
       
-    </>
+    </div>
   )
 }
 
