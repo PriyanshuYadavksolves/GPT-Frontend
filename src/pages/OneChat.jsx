@@ -1,72 +1,55 @@
 import axios from "axios";
 import Cookies from "js-cookie";
 import React, { useState, useEffect, useRef } from "react";
-import { NavLink, useNavigate } from "react-router-dom";
-import ReactMarkdown from "react-markdown";
-import { Prism as SyntaxHighlighter } from "react-syntax-highlighter";
-import { coldarkDark } from "react-syntax-highlighter/dist/esm/styles/prism";
+import { NavLink, useLocation, useNavigate, useParams } from "react-router-dom";
 import { toast } from "react-toastify";
+import ResponseRenderer from "../components/ResponseRenderer";
+import DeleteIcon from "../components/DeleteIcon";
+import Aside from "../components/Aside";
 
-function ResponseRenderer({ response }) {
-  return (
-    <ReactMarkdown
-      components={{
-        code({ node, inline, className, children, ...props }) {
-          const match = /language-(\w+)/.exec(className || "");
-          return !inline && match ? (
-            <SyntaxHighlighter
-              style={coldarkDark}
-              language={match[1]}
-              PreTag="div"
-              {...props}
-            >
-              {String(children).replace(/\n$/, "")}
-            </SyntaxHighlighter>
-          ) : (
-            <code className={className} {...props}>
-              {children}
-            </code>
-          );
-        },
-      }}
-    >
-      {response}
-    </ReactMarkdown>
-  );
-}
-
-const Logo = () => {
-  return (
-    <img
-      src="https://www.ksolves.com/wp-content/uploads/2020/09/Ksolves-Logo.png"
-      alt=""
-      height="32px"
-      width="32px"
-    />
-  );
-};
-
-const Home = ({setChats,chats}) => {
+const OneChat = () => {
   const [data, setData] = useState([]);
   const [msg, setMsg] = useState("");
   const navigate = useNavigate();
   const token = Cookies.get("jwtToken");
-  // const [chats, setChats] = useState([]);
-  console.log(chats)
+  const { chatId } = useParams();
+  const [chats, setChats] = useState([]);
 
-  const handleSearch = async (e) => {
+  useEffect(() => {
+    const fetchChat = async () => {
+      try {
+        const res = await axios.get(
+          process.env.BACKEND_URL + "api/user/getOneChat/" + chatId,
+          {
+            withCredentials: true,
+            headers: {
+              Authorization: "Bearer " + token,
+            },
+          }
+        );
+        // console.log("oneChat = ",res.data);
+        setData(res.data.data);
+      } catch (error) {
+        console.log(error);
+      }
+    };
+    fetchChat();
+  }, [chatId]);
+
+  const updateChat = async (e) => {
     e.preventDefault();
     const query = {
       role: "user",
       content: msg,
     };
+
     setMsg("");
     setData([...data, query]);
 
     try {
       const res = await axios.post(
-        process.env.BACKEND_URL + "api/user/query",
-        { username: "priyanshu", msg, data },
+        process.env.BACKEND_URL + "api/user/updateChat",
+        { chatId, msg },
         {
           withCredentials: true,
           headers: {
@@ -76,14 +59,12 @@ const Home = ({setChats,chats}) => {
       );
       console.log(res.data);
       setData((prev) => [...prev, res.data.response]);
-      setChats((prev) => [...prev, res.data.chat]);
-      navigate('/home/chat/'+res.data.chat._id)
     } catch (error) {
       console.log(error);
       toast.error(error.response.data.message);
-      // if (error.response.data.message === "Session Expires") {
-      //   handleLogout();
-      // }
+      if (error.response.data.message === "Session Expires") {
+        handleLogout();
+      }
     }
   };
   const textareaRef = useRef(null);
@@ -103,7 +84,7 @@ const Home = ({setChats,chats}) => {
   //       );
   //       setChats(res.data.reverse());
 
-  //       console.log("chat = ", res.data);
+  //       // console.log("chat = ", res.data);
   //     } catch (error) {
   //       console.log(error);
   //     }
@@ -125,36 +106,84 @@ const Home = ({setChats,chats}) => {
     }
   }, [msg]);
 
-  // const handleLogout = async () => {
-  //   try {
-  //     const res = await axios.get(process.env.BACKEND_URL + "api/auth/logout", {
-  //       withCredentials: true,
-  //     });
-  //     console.log(res.data);
-  //     toast.success("Logout suceess");
-  //     navigate("/login");
-  //   } catch (error) {
-  //     console.log(error);
-  //   }
-  // };
+  const handleLogout = async () => {
+    try {
+      const res = await axios.get(process.env.BACKEND_URL + "api/auth/logout", {
+        withCredentials: true,
+      });
+      console.log(res.data);
+      toast.success("Logout suceess");
+      navigate("/login");
+    } catch (error) {
+      console.log(error);
+    }
+  };
 
+  const handleDelete = async (chatid) => {
+    try {
+      const res = await axios.delete(
+        process.env.BACKEND_URL + "api/user/deleteChat/" + chatid,
+        {
+          withCredentials: true,
+          headers: {
+            Authorization: "Bearer " + token,
+          },
+        }
+      );
+      console.log(res.data);
+      setChats(chats.filter((chat) => chat._id !== chatId));
+      if(chatId === chatid){
+        navigate('/home')
+      }
+    } catch (error) {
+      console.log(error);
+    }
+  };
 
+  const messagesEndRef = useRef(null);
+
+  const scrollToBottom = () => {
+    console.log("hello");
+    if (messagesEndRef.current) {
+      messagesEndRef.current.scrollIntoView({ behavior: "smooth" });
+    }
+  };
+
+  useEffect(() => {
+    scrollToBottom();
+  }, [data]);
+
+  const onEnterKeyDown = (e) => {
+    console.log(e.key);
+    if (e.key === "Enter" && !e.shiftKey) {
+      updateChat(e);
+    }
+  };
 
   return (
     // <div className="h-screen flex relative ">
-    //   {/* <aside className="hidden md:flex w-[260px] h-screen pb-5">
-    //     <div className="w-full px-3 overflow-y-auto bg-gray-50 flex flex-col justify-between gap-3 ">
+    //   {/* <aside className="hidden md:flex  w-[260px] h-screen pb-5">
+    //     <div className="w-full px-3  overflow-y-auto bg-gray-100 flex flex-col justify-between gap-3 ">
     //       <button>New Chat</button>
 
-    //       <ul className="space-y-2 h-full font-medium py-4 ">
+    //       <ul className="space-y-2 w-full h-full font-medium py-4 overflow-y-auto ">
     //         {chats.map((ch) => (
     //           <li
     //             key={ch._id}
-    //             className=" bg-gray-300 rounded-lg"
-    //             onClick={() => handleOneChat(ch._id)}
+    //             className=" cursor-pointer "
     //           >
-    //             <NavLink to={'/home/chat/'+ch._id} className="flex items-center p-2 text-gray-900  hover:bg-gray-100">
+    //             <NavLink
+    //               to={"/home/chat/" + ch._id}
+    //               className="flex justify-between aria-[current=page]:text-red-600 aria-[current=page]:bg-gray-200 
+    //               aria-[current=page]:hover:bg-gray-300     rounded-lg items-center p-2 hover:bg-gray-200 text-gray-900"
+    //             >
     //               <span className="ms-3">{ch.title}</span>
+    //             <button
+    //               className="text-black hover:text-red-400 px-2 py-1 rounded-l-md"
+    //               onClick={() => handleDelete(ch._id)}
+    //             >
+    //               <DeleteIcon />
+    //             </button>
     //             </NavLink>
     //           </li>
     //         ))}
@@ -167,8 +196,10 @@ const Home = ({setChats,chats}) => {
     //       </button>
     //     </div>
     //   </aside> */}
+    //   {/* <Aside/> */}
 
-      
+
+
     // </div>
     <div className="h-screen relative flex w-full flex-col justify-between pb-5 gap-2">
     <div className="relative text-center border-b-2">
@@ -178,17 +209,7 @@ const Home = ({setChats,chats}) => {
         </div>
       </a>
     </div>
-
     <div className="relative h-full w-full flex flex-col overflow-y-auto items-center ">
-      {data.length === 0 && (
-        <div className="w-full h-full flex flex-col items-center justify-center ">
-          <Logo />
-          <span className="text-2xl font-medium">
-            How can I help you today?
-          </span>
-        </div>
-      )}
-
       {data.map((d, index) => (
         <div
           key={index}
@@ -197,7 +218,9 @@ const Home = ({setChats,chats}) => {
           <span>{d.role === "user" ? "You : " : "Ksolves GPT : "}</span>
           {d.role === "user" ? (
             <>
-              <div>{d.content}</div>
+              <div>
+                <span>{d.content}</span>
+              </div>
             </>
           ) : (
             <>
@@ -206,14 +229,16 @@ const Home = ({setChats,chats}) => {
           )}
         </div>
       ))}
+      <div ref={messagesEndRef} />
     </div>
     <form
       className="stretch mx-2 flex flex-row gap-3 justify-center "
-      onSubmit={handleSearch}
+      onSubmit={updateChat}
     >
       <div className="relative flex flex-1 flex-col md:max-w-3xl lg:max-w-[40rem] xl:max-w-[48rem]  ">
         <div className="overflow-hidden flex flex-col w-full flex-grow relative  ">
           <textarea
+            onKeyDown={onEnterKeyDown}
             ref={textareaRef}
             value={msg}
             required
@@ -244,4 +269,4 @@ const Home = ({setChats,chats}) => {
   );
 };
 
-export default Home;
+export default OneChat;

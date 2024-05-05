@@ -18,7 +18,7 @@ export default function Login() {
         }
       );
       console.log(res.data);
-      Cookies.set("token", res.data.token);
+      // Cookies.set("token", res.data.token);
       toast.success("Login Successfull");
       navigate("/home");
     } catch (error) {
@@ -51,9 +51,9 @@ export default function Login() {
       const res = await axios.post(process.env.BACKEND_URL + "api/auth/login", {
         email,
         password,
-      });
+      },{withCredentials:true});
       console.log(res.data);
-      Cookies.set("token", res.data.token);
+      // Cookies.set("token", res.data.token);
       toast.success("Login Successfull");
       navigate("/home");
     } catch (error) {
